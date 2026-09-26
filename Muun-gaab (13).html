@@ -1,0 +1,1271 @@
+<!DOCTYPE html>
+<html lang="so">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Muun-gaab</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Nunito:wght@800;900&family=Rubik:wght@700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            touch-action: manipulation;
+        }
+
+        body {
+            font-family: 'Rubik', 'Nunito', sans-serif;
+            background-color: #1a1714;
+            color: #ffffff;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+            font-weight: 800;
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        .score-font {
+            font-family: 'Fredoka', 'Rubik', sans-serif;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.6);
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #e3a867;
+            border-radius: 3px;
+        }
+
+        @keyframes titleGlow {
+            0%, 100% {
+                filter: drop-shadow(0 0 12px rgba(251, 191, 36, 0.8)) drop-shadow(0 0 25px rgba(245, 158, 11, 0.4));
+                transform: scale(1);
+            }
+            50% {
+                filter: drop-shadow(0 0 22px rgba(253, 224, 71, 1)) drop-shadow(0 0 38px rgba(245, 158, 11, 0.8));
+                transform: scale(1.05);
+            }
+        }
+
+        .title-pulse-glow {
+            animation: titleGlow 1.8s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="flex flex-col h-screen w-screen justify-center items-center relative bg-neutral-950 select-none overflow-hidden">
+
+    <div id="gameContainer" class="relative w-full h-full max-w-[650px] max-h-[1000px] md:rounded-2xl shadow-2xl overflow-hidden bg-[#e89d52] flex flex-col justify-between">
+        
+        <!-- Game Canvas Layer -->
+        <canvas id="gameCanvas" class="absolute inset-0 w-full h-full z-0 cursor-pointer"></canvas>
+
+        <!-- Dynamic Visual Overlay HUD -->
+        <div class="relative z-10 p-5 md:p-6 flex justify-between items-start pointer-events-none">
+            <div class="flex flex-col">
+                <span id="scoreDisplay" class="score-font text-3xl md:text-5xl text-white tracking-wider font-black drop-shadow-xl">
+                    Score: 0
+                </span>
+                <span id="actionHint" class="text-amber-200 text-xs md:text-sm font-extrabold drop-shadow-md mt-1 animate-pulse hidden tracking-wide">
+                    Swipe ama taabo skreenka si aad u bootsho!
+                </span>
+            </div>
+            <div class="pointer-events-auto flex items-center gap-2">
+                <button id="toggleControlsBtn" class="bg-black/50 hover:bg-black/70 active:scale-95 text-amber-300 font-black text-xs md:text-sm px-4 py-2 rounded-2xl backdrop-blur-md border border-amber-500/40 transition duration-200 uppercase tracking-wide shadow-xl cursor-pointer">
+                    Muun-gaab Studio
+                </button>
+            </div>
+        </div>
+
+        <!-- Pre-Game Quiz Overlay -->
+        <div id="quizOverlay" class="absolute inset-0 z-40 bg-black/85 backdrop-blur-md flex flex-col justify-center items-center p-6 text-center transition-all duration-300">
+            <div id="quizCard" class="bg-neutral-900/95 border-2 border-amber-500 p-7 rounded-3xl max-w-sm w-full shadow-2xl flex flex-col items-center">
+                
+                <h1 class="text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 score-font tracking-widest uppercase mb-4 title-pulse-glow">
+                    Muun-gaab
+                </h1>
+
+                <h2 id="quizQuestion" class="text-2xl md:text-3xl font-black text-amber-400 mb-6 score-font tracking-wide leading-tight">
+                    Aryaa ma Abgaalaa tahy ?
+                </h2>
+                
+                <div id="quizButtons" class="flex gap-4 w-full">
+                    <button id="btnYes" class="flex-1 bg-emerald-600 hover:bg-emerald-500 active:scale-90 text-white font-black py-3.5 px-5 rounded-2xl shadow-xl transition-all text-2xl uppercase tracking-wider border-2 border-emerald-400/50 cursor-pointer">
+                        Ha
+                    </button>
+                    <button id="btnNo" class="flex-1 bg-rose-600 hover:bg-rose-500 active:scale-90 text-white font-black py-3.5 px-5 rounded-2xl shadow-xl transition-all text-2xl uppercase tracking-wider border-2 border-rose-400/50 cursor-pointer">
+                        Maya
+                    </button>
+                </div>
+
+                <div id="quizResponse" class="hidden flex-col items-center mt-2 w-full">
+                    <p id="quizMsg" class="text-lg md:text-xl font-black mb-6 leading-snug tracking-wide text-amber-200"></p>
+                    <button id="btnStartGame" class="hidden w-full bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-neutral-950 font-black py-4 rounded-2xl shadow-xl active:scale-95 transition-all text-xl md:text-2xl uppercase tracking-widest score-font border-2 border-amber-200 cursor-pointer">
+                        Haye
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Crash / Game Over Modal -->
+        <div id="crashOverlay" class="absolute inset-0 z-30 bg-black/75 backdrop-blur-sm flex flex-col justify-center items-center p-6 text-center opacity-0 pointer-events-none transition-opacity duration-300">
+            <div class="bg-neutral-900/95 border-2 border-amber-500 p-7 rounded-3xl max-w-xs w-full shadow-2xl flex flex-col items-center transform scale-95 transition-transform duration-300" id="crashBox">
+                <h2 class="text-2xl md:text-3xl font-black text-rose-500 mb-2 score-font tracking-wide uppercase leading-snug">
+                    KAROOD MADOW HAKU DILE
+                </h2>
+                <p id="crashReason" class="text-sm md:text-base font-extrabold text-neutral-200 mb-5 leading-snug">
+                    KA DAG DAMEERKA HA DILINE
+                </p>
+                <div class="text-xl font-black text-white mb-6 bg-neutral-800 px-6 py-3 rounded-2xl border border-amber-500/30 w-full flex justify-between items-center shadow-inner">
+                    <span class="text-neutral-400 text-xs uppercase font-extrabold tracking-wider">Final Score</span>
+                    <span id="finalScoreText" class="text-amber-400 score-font text-3xl font-black">0</span>
+                </div>
+                <div class="flex flex-col gap-3 w-full">
+                    <button id="btnRestart" class="pointer-events-auto w-full bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-neutral-950 font-black py-3.5 rounded-2xl shadow-xl active:scale-95 transition-all text-xl uppercase tracking-wider score-font border-2 border-amber-200 cursor-pointer">
+                        Ciyaar Mar Kale
+                    </button>
+                    <button id="btnRestartQuiz" class="pointer-events-auto w-full bg-neutral-800 hover:bg-neutral-700 active:scale-95 text-amber-400 font-extrabold py-3 rounded-2xl border border-amber-500/40 shadow-lg transition-all text-sm uppercase tracking-wider cursor-pointer">
+                        SO WADA BILOW
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Touch Controls Overlay (Hidden by default) -->
+        <div id="controlsContainer" class="relative z-10 p-4 pb-6 flex flex-col gap-3 pointer-events-none transition-opacity duration-200 opacity-0">
+            <div class="grid grid-cols-3 gap-3 w-full max-w-md mx-auto pointer-events-auto">
+                <button id="btnLeft" class="bg-gradient-to-b from-amber-500 to-amber-600 active:from-amber-400 active:to-amber-500 text-amber-950 font-black py-4 rounded-2xl border-2 border-amber-300/60 text-lg md:text-xl uppercase tracking-wider transition-all shadow-xl active:scale-90 cursor-pointer">
+                    <span>Bidix</span>
+                </button>
+                <button id="btnJump" class="bg-gradient-to-b from-emerald-500 to-emerald-600 active:from-emerald-400 active:to-emerald-500 text-white font-black py-4 rounded-2xl border-2 border-emerald-300/60 text-xl md:text-2xl uppercase tracking-widest transition-all shadow-xl active:scale-90 score-font cursor-pointer">
+                    <span>Bootin</span>
+                </button>
+                <button id="btnRight" class="bg-gradient-to-b from-amber-500 to-amber-600 active:from-amber-400 active:to-amber-500 text-amber-950 font-black py-4 rounded-2xl border-2 border-amber-300/60 text-lg md:text-xl uppercase tracking-wider transition-all shadow-xl active:scale-90 cursor-pointer">
+                    <span>Midig</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Visual Tuning Panel Drawer -->
+        <div id="visualPanel" class="absolute bottom-0 left-0 right-0 z-20 bg-neutral-900/95 backdrop-blur-lg p-6 rounded-t-3xl border-t-2 border-amber-500/50 transform translate-y-full transition-transform duration-300 max-h-[70vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-5 pb-3 border-b border-white/10">
+                <h3 class="font-black text-amber-400 text-xl score-font tracking-wide flex items-center gap-2">
+                    <span>Muun-gaab Visual Studio</span>
+                </h3>
+                <button id="closePanelBtn" class="text-neutral-400 hover:text-white font-black text-2xl px-2 cursor-pointer">✕</button>
+            </div>
+            
+            <div class="space-y-4 text-sm font-extrabold text-neutral-200">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <label class="flex items-center justify-between bg-neutral-800 p-3 rounded-xl border border-neutral-700 cursor-pointer">
+                        <span>Onscreen Control Buttons</span>
+                        <input type="checkbox" id="chkControls" class="accent-amber-500 w-5 h-5 cursor-pointer">
+                    </label>
+                    <label class="flex items-center justify-between bg-neutral-800 p-3 rounded-xl border border-neutral-700 cursor-pointer">
+                        <span>Road Roughness Animation</span>
+                        <input type="checkbox" id="chkBouncing" checked class="accent-amber-500 w-5 h-5 cursor-pointer">
+                    </label>
+                    <label class="flex items-center justify-between bg-neutral-800 p-3 rounded-xl border border-neutral-700 cursor-pointer">
+                        <span>Curved Action Arrows</span>
+                        <input type="checkbox" id="chkArrows" checked class="accent-amber-500 w-5 h-5 cursor-pointer">
+                    </label>
+                    <label class="flex items-center justify-between bg-neutral-800 p-3 rounded-xl border border-neutral-700 cursor-pointer">
+                        <span>Pebbles & Grass Spots</span>
+                        <input type="checkbox" id="chkDetails" checked class="accent-amber-500 w-5 h-5 cursor-pointer">
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const actionHint = document.getElementById('actionHint');
+        const toggleControlsBtn = document.getElementById('toggleControlsBtn');
+        const quizOverlay = document.getElementById('quizOverlay');
+        const quizQuestion = document.getElementById('quizQuestion');
+        const quizButtons = document.getElementById('quizButtons');
+        const btnYes = document.getElementById('btnYes');
+        const btnNo = document.getElementById('btnNo');
+        const quizResponse = document.getElementById('quizResponse');
+        const quizMsg = document.getElementById('quizMsg');
+        const btnStartGame = document.getElementById('btnStartGame');
+        const crashOverlay = document.getElementById('crashOverlay');
+        const crashBox = document.getElementById('crashBox');
+        const crashReason = document.getElementById('crashReason');
+        const finalScoreText = document.getElementById('finalScoreText');
+        const btnRestart = document.getElementById('btnRestart');
+        const btnRestartQuiz = document.getElementById('btnRestartQuiz');
+        const controlsContainer = document.getElementById('controlsContainer');
+        const visualPanel = document.getElementById('visualPanel');
+        const closePanelBtn = document.getElementById('closePanelBtn');
+        const chkControls = document.getElementById('chkControls');
+        const chkBouncing = document.getElementById('chkBouncing');
+        const chkArrows = document.getElementById('chkArrows');
+        const chkDetails = document.getElementById('chkDetails');
+
+        const COLORS = {
+            skyTop: '#1e3a8a',
+            skyBottom: '#e89d52',
+            sun: '#fef08a',
+            cloud: 'rgba(255, 255, 255, 0.3)',
+            mountainFar: '#854d0e',
+            mountainNear: '#582f0e',
+            grass: '#8d542b',
+            grassShade: '#603808',
+            dirtRoad: '#c68546',
+            dirtEdge: '#6b3f17',
+            dirtSpeckle: '#a36329',
+            treeTrunk: '#3e2109',
+            treeCanopyDark: '#1e3f20',
+            treeCanopyMid: '#2d5a2f',
+            treeCanopyTop: '#3e7b41',
+            bushGreen: '#284e2a',
+            wheelTire: '#18181b',
+            wheelRim: '#a1a1aa',
+            cartWoodDark: '#582f0e',
+            cartWoodLight: '#8d542b',
+            cartWoodLine: '#3e2109',
+            cartIron: '#3f3f46',
+            arrowWhite: '#ffffff'
+        };
+
+        const state = {
+            gameState: 'QUIZ',
+            width: 400,
+            height: 700,
+            horizonYRatio: 0.45,
+            roadTopWidthRatio: 0.08,
+            roadBottomWidthRatio: 0.85,
+            speed: 12,
+            cameraZ: 0,
+            distance: 0,
+            score: 0,
+            lane: 0,
+            targetXRatio: 0.5,
+            currentXRatio: 0.5,
+            isJumping: false,
+            jumpProgress: 0,
+            jumpHeight: 0,
+            screenShake: 0,
+            worldObjects: [],
+            particles: [],
+            isBouncing: true,
+            bounceTimer: 0,
+            showArrows: true,
+            showDetails: true,
+            activeArrow: null
+        };
+
+        function resizeCanvas() {
+            const container = document.getElementById('gameContainer');
+            if (!container) return;
+            const rect = container.getBoundingClientRect();
+            const w = rect.width || window.innerWidth || 360;
+            const h = rect.height || window.innerHeight || 640;
+            canvas.width = w;
+            canvas.height = h;
+            state.width = w;
+            state.height = h;
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+
+        function initWorldObjects() {
+            state.worldObjects = [];
+            state.particles = [];
+            state.distance = 0;
+            state.score = 0;
+            state.cameraZ = 0;
+            if (state.gameState !== 'LOCKED') {
+                state.gameState = 'PLAYING';
+            }
+            state.lane = 0;
+            state.targetXRatio = 0.5;
+            state.currentXRatio = 0.5;
+            state.isJumping = false;
+            state.jumpProgress = 0;
+            state.jumpHeight = 0;
+
+            crashOverlay.classList.add('opacity-0', 'pointer-events-none');
+            crashBox.classList.add('scale-95');
+
+            for (let z = 50; z < 2500; z += 22) {
+                state.worldObjects.push({
+                    xRatio: -0.2 - Math.random() * 0.7,
+                    z: z,
+                    type: Math.random() > 0.4 ? 'acacia' : 'bush',
+                    scale: 0.7 + Math.random() * 0.6,
+                    isObstacle: false
+                });
+                state.worldObjects.push({
+                    xRatio: 0.2 + Math.random() * 0.7,
+                    z: z,
+                    type: Math.random() > 0.4 ? 'acacia' : 'bush',
+                    scale: 0.7 + Math.random() * 0.6,
+                    isObstacle: false
+                });
+            }
+
+            spawnRoadObstacle(300);
+            spawnRoadObstacle(700);
+            spawnRoadObstacle(1100);
+            spawnRoadObstacle(1500);
+            spawnRoadObstacle(1900);
+        }
+
+        function spawnRoadObstacle(atZ) {
+            const isSmallTree = Math.random() > 0.45;
+            const lanes = [-0.22, 0, 0.22];
+            const targetLaneIndex = Math.floor(Math.random() * 3);
+            const obstacleLaneX = lanes[targetLaneIndex];
+
+            if (isSmallTree) {
+                state.worldObjects.push({
+                    xRatio: obstacleLaneX,
+                    laneIndex: targetLaneIndex - 1,
+                    z: atZ,
+                    type: 'small_acacia_road',
+                    scale: 0.65,
+                    isObstacle: true,
+                    cleared: false
+                });
+            } else {
+                state.worldObjects.push({
+                    xRatio: obstacleLaneX,
+                    laneIndex: targetLaneIndex - 1,
+                    z: atZ,
+                    type: 'large_acacia',
+                    scale: 1.75,
+                    isObstacle: true,
+                    cleared: false
+                });
+            }
+        }
+
+        function drawBackground() {
+            const w = state.width;
+            const h = state.height;
+            const horizonY = h * state.horizonYRatio;
+
+            ctx.save();
+            if (state.screenShake > 0) {
+                const shakeX = (Math.random() - 0.5) * state.screenShake;
+                const shakeY = (Math.random() - 0.5) * state.screenShake;
+                ctx.translate(shakeX, shakeY);
+                state.screenShake *= 0.85;
+                if (state.screenShake < 0.5) state.screenShake = 0;
+            }
+
+            const skyGrad = ctx.createLinearGradient(0, 0, 0, horizonY);
+            skyGrad.addColorStop(0, COLORS.skyTop);
+            skyGrad.addColorStop(1, COLORS.skyBottom);
+            ctx.fillStyle = skyGrad;
+            ctx.fillRect(-20, -20, w + 40, horizonY + 20);
+
+            const sunX = w * 0.85;
+            const sunY = h * 0.12;
+            const sunRadius = w * 0.07;
+            ctx.fillStyle = COLORS.sun;
+            ctx.beginPath();
+            ctx.arc(sunX, sunY, sunRadius, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = COLORS.cloud;
+            ctx.beginPath();
+            ctx.ellipse(w * 0.5, horizonY - 25, w * 0.25, 6, 0, 0, Math.PI * 2);
+            ctx.ellipse(w * 0.2, horizonY - 40, w * 0.15, 4, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = COLORS.mountainFar;
+            ctx.beginPath();
+            ctx.moveTo(0, horizonY);
+            ctx.lineTo(0, horizonY - 15);
+            ctx.quadraticCurveTo(w * 0.15, horizonY - 28, w * 0.35, horizonY - 12);
+            ctx.quadraticCurveTo(w * 0.60, horizonY - 32, w * 0.80, horizonY - 15);
+            ctx.lineTo(w, horizonY - 22);
+            ctx.lineTo(w, horizonY);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = COLORS.mountainNear;
+            ctx.beginPath();
+            ctx.moveTo(0, horizonY);
+            ctx.lineTo(0, horizonY - 8);
+            ctx.quadraticCurveTo(w * 0.25, horizonY - 18, w * 0.5, horizonY - 8);
+            ctx.quadraticCurveTo(w * 0.75, horizonY - 22, w, horizonY - 10);
+            ctx.lineTo(w, horizonY);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = COLORS.grass;
+            ctx.fillRect(0, horizonY, w, h - horizonY);
+        }
+
+        function drawRoad() {
+            const w = state.width;
+            const h = state.height;
+            const horizonY = h * state.horizonYRatio;
+
+            const topW = w * state.roadTopWidthRatio;
+            const botW = w * state.roadBottomWidthRatio;
+            const xCenter = w * 0.5;
+
+            ctx.fillStyle = COLORS.dirtRoad;
+            ctx.beginPath();
+            ctx.moveTo(xCenter - topW / 2, horizonY);
+            ctx.lineTo(xCenter + topW / 2, horizonY);
+            ctx.lineTo(xCenter + botW / 2, h);
+            ctx.lineTo(xCenter - botW / 2, h);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.strokeStyle = COLORS.dirtEdge;
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(xCenter - topW / 2, horizonY);
+            ctx.lineTo(xCenter - botW / 2, h);
+            ctx.moveTo(xCenter + topW / 2, horizonY);
+            ctx.lineTo(xCenter + botW / 2, h);
+            ctx.stroke();
+
+            if (state.showDetails) {
+                ctx.fillStyle = COLORS.dirtSpeckle;
+                const numSpeckles = 35;
+                for (let i = 0; i < numSpeckles; i++) {
+                    const offset = (i * 40 + state.cameraZ * 0.8) % (h - horizonY);
+                    const progress = offset / (h - horizonY);
+                    const currentRoadW = topW + (botW - topW) * progress;
+                    const pX1 = xCenter - currentRoadW * 0.35 + (Math.sin(i * 12) * currentRoadW * 0.25);
+                    const pY1 = horizonY + offset;
+                    const spotSize = 1.5 + progress * 4;
+
+                    ctx.beginPath();
+                    ctx.arc(pX1, pY1, spotSize, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                ctx.fillStyle = COLORS.grassShade;
+                for (let i = 0; i < 20; i++) {
+                    const offset = (i * 65 + state.cameraZ) % (h - horizonY);
+                    const progress = offset / (h - horizonY);
+                    const currentRoadW = topW + (botW - topW) * progress;
+                    const sideSign = i % 2 === 0 ? -1 : 1;
+                    const gx = xCenter + sideSign * (currentRoadW * 0.52 + Math.sin(i * 5) * 15 * progress);
+                    const gy = horizonY + offset;
+                    const tuftSize = (2 + progress * 8);
+
+                    ctx.beginPath();
+                    ctx.arc(gx, gy, tuftSize, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+        }
+
+        function drawAcaciaTree(x, y, scale, isObstacleType = 'standard') {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.scale(scale, scale);
+
+            const trunkColor = COLORS.treeTrunk;
+
+            if (isObstacleType === 'large_acacia') {
+                ctx.fillStyle = trunkColor;
+                ctx.beginPath();
+                ctx.moveTo(-12, 0);
+                ctx.quadraticCurveTo(-18, -60, -45, -120);
+                ctx.lineTo(-25, -125);
+                ctx.quadraticCurveTo(-5, -70, 8, 0);
+                ctx.fill();
+
+                ctx.beginPath();
+                ctx.moveTo(-35, -100);
+                ctx.lineTo(-80, -135);
+                ctx.lineTo(-65, -138);
+                ctx.lineTo(-28, -110);
+                ctx.fill();
+
+                ctx.beginPath();
+                ctx.moveTo(-28, -110);
+                ctx.lineTo(20, -145);
+                ctx.lineTo(35, -142);
+                ctx.lineTo(-15, -118);
+                ctx.fill();
+
+                const cY = -145;
+                ctx.fillStyle = COLORS.treeCanopyDark;
+                ctx.beginPath();
+                ctx.ellipse(-20, cY + 8, 140, 22, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = COLORS.treeCanopyMid;
+                ctx.beginPath();
+                ctx.ellipse(-25, cY, 135, 20, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = COLORS.treeCanopyTop;
+                ctx.beginPath();
+                ctx.ellipse(-30, cY - 6, 120, 16, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+            } else {
+                ctx.fillStyle = trunkColor;
+                ctx.beginPath();
+                ctx.moveTo(-6, 0);
+                ctx.lineTo(-8, -35);
+                ctx.lineTo(-22, -58);
+                ctx.lineTo(-14, -60);
+                ctx.lineTo(-3, -42);
+                ctx.lineTo(12, -58);
+                ctx.lineTo(18, -55);
+                ctx.lineTo(4, -35);
+                ctx.lineTo(6, 0);
+                ctx.fill();
+
+                const cY = -62;
+                ctx.fillStyle = COLORS.treeCanopyDark;
+                ctx.beginPath();
+                ctx.ellipse(0, cY + 4, 48, 11, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = COLORS.treeCanopyMid;
+                ctx.beginPath();
+                ctx.ellipse(-2, cY, 46, 10, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = COLORS.treeCanopyTop;
+                ctx.beginPath();
+                ctx.ellipse(-4, cY - 3, 38, 8, 0, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            ctx.restore();
+        }
+
+        function drawBush(x, y, scale) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.scale(scale, scale);
+
+            ctx.fillStyle = COLORS.bushGreen;
+            ctx.beginPath();
+            ctx.arc(-10, -6, 10, 0, Math.PI * 2);
+            ctx.arc(0, -10, 13, 0, Math.PI * 2);
+            ctx.arc(10, -6, 9, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = COLORS.treeCanopyDark;
+            ctx.beginPath();
+            ctx.arc(0, -4, 11, 0, Math.PI);
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        function updateAndDrawWorldObjects() {
+            const w = state.width;
+            const h = state.height;
+            const horizonY = h * state.horizonYRatio;
+
+            state.activeArrow = null;
+
+            const visibleObjects = [];
+            let maxAtZ = 0;
+
+            for (let i = 0; i < state.worldObjects.length; i++) {
+                const obj = state.worldObjects[i];
+                let relZ = obj.z - state.cameraZ;
+
+                if (obj.z > maxAtZ) maxAtZ = obj.z;
+
+                if (relZ < -50) {
+                    if (!obj.isObstacle) {
+                        obj.z += 2400;
+                    }
+                    continue;
+                }
+
+                if (relZ > 2 && relZ < 1000) {
+                    visibleObjects.push({ ...obj, relZ, originalObj: obj });
+                }
+            }
+
+            if (maxAtZ < state.cameraZ + 2000) {
+                spawnRoadObstacle(maxAtZ + 350 + Math.random() * 200);
+            }
+
+            visibleObjects.sort((a, b) => b.relZ - a.relZ);
+
+            visibleObjects.forEach(obj => {
+                const normZ = obj.relZ / 1000;
+                const scale = Math.pow(1 - normZ, 2.2);
+                
+                const screenY = horizonY + (h - horizonY) * Math.pow(1 - normZ, 1.8);
+                const roadWAtY = (w * state.roadTopWidthRatio) + ((w * state.roadBottomWidthRatio) - (w * state.roadTopWidthRatio)) * Math.pow(1 - normZ, 1.8);
+                const screenX = (w * 0.5) + obj.xRatio * roadWAtY * 2.2;
+                const drawScale = scale * obj.scale * (w / 400);
+
+                if (screenY > horizonY && screenY < h + 120) {
+                    if (obj.type === 'bush') {
+                        drawBush(screenX, screenY, drawScale);
+                    } else {
+                        drawAcaciaTree(screenX, screenY, drawScale, obj.type);
+                    }
+                }
+
+                if (obj.isObstacle && state.gameState === 'PLAYING') {
+                    if (obj.relZ > 40 && obj.relZ < 320) {
+                        if (obj.type === 'small_acacia_road') {
+                            if (Math.abs(obj.laneIndex - state.lane) <= 0.5) {
+                                state.activeArrow = { type: 'JUMP', x: screenX, y: screenY };
+                            }
+                        } else if (obj.type === 'large_acacia') {
+                            if (Math.abs(obj.laneIndex - state.lane) <= 0.8) {
+                                const suggestDirection = obj.laneIndex > 0 ? 'LEFT' : 'RIGHT';
+                                state.activeArrow = { type: suggestDirection, x: screenX, y: screenY };
+                            }
+                        }
+                    }
+
+                    if (obj.relZ > 15 && obj.relZ < 85) {
+                        if (obj.type === 'small_acacia_road') {
+                            const laneMatch = Math.abs(obj.laneIndex - state.lane) < 0.6;
+                            if (laneMatch) {
+                                if (state.jumpHeight > 32) {
+                                    if (!obj.originalObj.cleared) {
+                                        obj.originalObj.cleared = true;
+                                        addDustParticles(screenX, screenY, 12, '#F5CDA0');
+                                        state.score += 15;
+                                    }
+                                } else {
+                                    triggerCrash("KA DAG DAMEERKA HA DILINE");
+                                }
+                            }
+
+                        } else if (obj.type === 'large_acacia') {
+                            const isHit = Math.abs(obj.laneIndex - state.lane) < 0.8;
+                            if (isHit) {
+                                triggerCrash("KA DAG DAMEERKA HA DILINE");
+                            } else if (!obj.originalObj.cleared) {
+                                obj.originalObj.cleared = true;
+                                state.score += 20;
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function triggerCrash(reasonText) {
+            if (state.gameState === 'CRASHED') return;
+            state.gameState = 'CRASHED';
+            state.screenShake = 22;
+
+            const cartX = state.width * state.currentXRatio;
+            const cartY = state.height * 0.82;
+            addDustParticles(cartX, cartY, 30, '#8D542B');
+            addDustParticles(cartX, cartY, 20, '#2F4F21');
+
+            crashReason.innerText = reasonText || "KA DAG DAMEERKA HA DILINE";
+            finalScoreText.innerText = Math.floor(state.score);
+
+            setTimeout(() => {
+                crashOverlay.classList.remove('opacity-0', 'pointer-events-none');
+                crashBox.classList.remove('scale-95');
+            }, 300);
+        }
+
+        function addDustParticles(x, y, count, color) {
+            for (let i = 0; i < count; i++) {
+                state.particles.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 8,
+                    vy: (Math.random() - 0.8) * 7,
+                    size: 3 + Math.random() * 5,
+                    color: color,
+                    life: 1.0
+                });
+            }
+        }
+
+        function updateAndDrawParticles() {
+            for (let i = state.particles.length - 1; i >= 0; i--) {
+                const p = state.particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.25;
+                p.life -= 0.03;
+
+                if (p.life <= 0) {
+                    state.particles.splice(i, 1);
+                    continue;
+                }
+
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = p.life;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1.0;
+            }
+        }
+
+        function drawJerryCan(x, y, width, height, color, darkCapColor) {
+            ctx.save();
+            ctx.translate(x, y);
+
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+            ctx.beginPath();
+            ctx.ellipse(width / 2, height, width / 2, 3, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            if (ctx.roundRect) {
+                ctx.roundRect(0, 0, width, height, [4, 4, 2, 2]);
+            } else {
+                ctx.rect(0, 0, width, height);
+            }
+            ctx.fill();
+
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.18)';
+            ctx.fillRect(width * 0.6, 0, width * 0.4, height);
+
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.22)';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(width * 0.2, height * 0.35);
+            ctx.lineTo(width * 0.8, height * 0.35);
+            ctx.moveTo(width * 0.2, height * 0.65);
+            ctx.lineTo(width * 0.8, height * 0.65);
+            ctx.stroke();
+
+            ctx.fillStyle = color;
+            ctx.fillRect(width * 0.2, -4, width * 0.6, 4);
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+            ctx.fillRect(width * 0.35, -2, width * 0.3, 2);
+
+            ctx.fillStyle = darkCapColor || '#1E293B';
+            ctx.fillRect(width * 0.1, -6, 5, 6);
+
+            ctx.restore();
+        }
+
+        function drawDonkeyAndCart() {
+            const w = state.width;
+            const h = state.height;
+
+            state.currentXRatio += (state.targetXRatio - state.currentXRatio) * 0.18;
+            const cartX = w * state.currentXRatio;
+
+            let bounceY = 0;
+            if (state.isBouncing && state.gameState === 'PLAYING') {
+                state.bounceTimer += 0.22;
+                bounceY = Math.sin(state.bounceTimer) * 2.8;
+            }
+
+            if (state.isJumping) {
+                state.jumpProgress += 0.045;
+                if (state.jumpProgress >= 1) {
+                    state.isJumping = false;
+                    state.jumpProgress = 0;
+                    state.jumpHeight = 0;
+                    addDustParticles(cartX, h * 0.82, 8, '#C68546');
+                } else {
+                    state.jumpHeight = Math.sin(state.jumpProgress * Math.PI) * 75;
+                }
+            }
+
+            const totalYOffset = bounceY - state.jumpHeight;
+            const cartY = h * 0.82 + totalYOffset;
+            const cartScale = (w / 420);
+
+            ctx.save();
+            ctx.translate(cartX, cartY);
+            ctx.scale(cartScale, cartScale);
+
+            // Ground shadow
+            const shadowAlpha = Math.max(0.08, 0.35 - (state.jumpHeight / 200));
+            const shadowScale = Math.max(0.4, 1 - (state.jumpHeight / 120));
+            ctx.fillStyle = `rgba(60, 40, 20, ${shadowAlpha})`;
+            ctx.beginPath();
+            ctx.ellipse(0, 48 + state.jumpHeight * 0.9, 65 * shadowScale, 16 * shadowScale, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Donkey Rear View Artwork
+            const donkeyY = -28;
+            const legWalkOffset = state.gameState === 'PLAYING' ? Math.sin(state.bounceTimer * 1.5) * 7 : 0;
+            const tailSwish = state.gameState === 'PLAYING' ? Math.sin(state.bounceTimer * 0.8) * 8 : 0;
+
+            // Donkey Rear Legs
+            ctx.fillStyle = '#42454B';
+            ctx.fillRect(-11, donkeyY + 32, 7, 24 + legWalkOffset);
+            ctx.fillRect(4, donkeyY + 32, 7, 24 - legWalkOffset);
+
+            // Hooves
+            ctx.fillStyle = '#1D1E22';
+            ctx.fillRect(-11, donkeyY + 52 + legWalkOffset, 7, 5);
+            ctx.fillRect(4, donkeyY + 52 - legWalkOffset, 7, 5);
+
+            // Tail
+            ctx.strokeStyle = '#61656E';
+            ctx.lineWidth = 3.5;
+            ctx.beginPath();
+            ctx.moveTo(0, donkeyY + 22);
+            ctx.quadraticCurveTo(tailSwish * 0.7, donkeyY + 38, tailSwish, donkeyY + 48);
+            ctx.stroke();
+
+            ctx.fillStyle = '#22252A';
+            ctx.beginPath();
+            ctx.ellipse(tailSwish, donkeyY + 50, 4, 7, tailSwish * 0.05, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Donkey Body Gradient
+            const donkeyBodyGrad = ctx.createLinearGradient(0, donkeyY - 10, 0, donkeyY + 35);
+            donkeyBodyGrad.addColorStop(0, '#A3A8B2');
+            donkeyBodyGrad.addColorStop(0.5, '#7C818A');
+            donkeyBodyGrad.addColorStop(1, '#535760');
+            ctx.fillStyle = donkeyBodyGrad;
+            
+            ctx.beginPath();
+            ctx.ellipse(0, donkeyY + 16, 17, 22, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = 'rgba(0,0,0,0.12)';
+            ctx.fillRect(-2, donkeyY - 5, 4, 38);
+
+            ctx.fillStyle = '#838892';
+            ctx.beginPath();
+            ctx.ellipse(0, donkeyY - 8, 11, 16, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#6E737D';
+            ctx.beginPath();
+            ctx.ellipse(0, donkeyY - 20, 8, 10, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#22252A';
+            ctx.fillRect(-2, donkeyY - 32, 4, 28);
+
+            // Left Ear
+            ctx.save();
+            ctx.translate(-7, donkeyY - 24);
+            ctx.rotate(-0.28 + Math.sin(state.bounceTimer * 0.8) * 0.06);
+            ctx.fillStyle = '#6E737D';
+            ctx.beginPath();
+            ctx.ellipse(0, -18, 6, 20, -0.1, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#B4A5A5';
+            ctx.beginPath();
+            ctx.ellipse(0, -17, 3, 14, -0.1, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#22252A';
+            ctx.beginPath();
+            ctx.ellipse(-1, -34, 2.5, 5, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+
+            // Right Ear
+            ctx.save();
+            ctx.translate(7, donkeyY - 24);
+            ctx.rotate(0.28 - Math.sin(state.bounceTimer * 0.8) * 0.06);
+            ctx.fillStyle = '#6E737D';
+            ctx.beginPath();
+            ctx.ellipse(0, -18, 6, 20, 0.1, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#B4A5A5';
+            ctx.beginPath();
+            ctx.ellipse(0, -17, 3, 14, 0.1, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#22252A';
+            ctx.beginPath();
+            ctx.ellipse(1, -34, 2.5, 5, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+
+            // Harness
+            ctx.strokeStyle = '#3A2314';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(-13, donkeyY + 8);
+            ctx.lineTo(13, donkeyY + 8);
+            ctx.moveTo(-11, donkeyY - 2);
+            ctx.lineTo(11, donkeyY - 2);
+            ctx.moveTo(-15, donkeyY + 12);
+            ctx.lineTo(-28, 15);
+            ctx.moveTo(15, donkeyY + 12);
+            ctx.lineTo(28, 15);
+            ctx.stroke();
+
+            ctx.fillStyle = '#E5B13A';
+            ctx.beginPath();
+            ctx.arc(-13, donkeyY + 8, 2.5, 0, Math.PI * 2);
+            ctx.arc(13, donkeyY + 8, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Cart & Jerry Cans
+            const cartW = 90;
+            const cartH = 46;
+
+            ctx.fillStyle = COLORS.wheelTire;
+            ctx.beginPath();
+            if (ctx.roundRect) {
+                ctx.roundRect(-cartW / 2 - 14, 0, 12, 52, 6);
+                ctx.roundRect(cartW / 2 + 2, 0, 12, 52, 6);
+            } else {
+                ctx.rect(-cartW / 2 - 14, 0, 12, 52);
+                ctx.rect(cartW / 2 + 2, 0, 12, 52);
+            }
+            ctx.fill();
+
+            ctx.fillStyle = COLORS.wheelRim;
+            ctx.fillRect(-cartW / 2 - 10, 18, 4, 16);
+            ctx.fillRect(cartW / 2 + 6, 18, 4, 16);
+
+            ctx.fillStyle = COLORS.cartWoodDark;
+            ctx.fillRect(-cartW / 2, 0, cartW, cartH);
+
+            drawJerryCan(-35, -18, 18, 28, '#EAB308', '#854D0E');
+            drawJerryCan(-15, -24, 20, 32, '#2563EB', '#1E3A8A');
+            drawJerryCan(5, -22, 19, 30, '#FACC15', '#A16207');
+            drawJerryCan(20, -14, 17, 24, '#E11D48', '#881337');
+
+            const plankH = (cartH - 6) / 3;
+            ctx.fillStyle = COLORS.cartWoodLight;
+            for (let i = 0; i < 3; i++) {
+                ctx.fillRect(-cartW / 2 + 3, 3 + i * (plankH + 1), cartW - 6, plankH - 1);
+            }
+
+            ctx.strokeStyle = COLORS.cartWoodLine;
+            ctx.lineWidth = 1.5;
+            for (let i = 1; i <= 2; i++) {
+                ctx.beginPath();
+                ctx.moveTo(-cartW / 2 + 3, 2 + i * plankH);
+                ctx.lineTo(cartW / 2 - 3, 2 + i * plankH);
+                ctx.stroke();
+            }
+
+            ctx.fillStyle = COLORS.cartIron;
+            ctx.fillRect(-cartW / 2 - 1, -1, 6, 8);
+            ctx.fillRect(cartW / 2 - 5, -1, 6, 8);
+            ctx.fillRect(-cartW / 2 - 1, cartH - 7, 6, 8);
+            ctx.fillRect(cartW / 2 - 5, cartH - 7, 6, 8);
+
+            ctx.restore();
+
+            if (state.showArrows && state.activeArrow && state.gameState === 'PLAYING') {
+                drawSteeringArrow(cartX, cartY - state.jumpHeight, cartScale, state.activeArrow.type);
+            }
+        }
+
+        function drawSteeringArrow(cartX, cartY, scale, arrowType) {
+            ctx.save();
+            ctx.strokeStyle = COLORS.arrowWhite;
+            ctx.fillStyle = COLORS.arrowWhite;
+            ctx.lineWidth = 4;
+            ctx.lineCap = 'round';
+
+            if (arrowType === 'JUMP') {
+                const arrowX = cartX;
+                const arrowY = cartY - 70 * scale;
+
+                ctx.beginPath();
+                ctx.arc(arrowX, arrowY, 22 * scale, Math.PI * 1.1, Math.PI * 1.9, false);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(arrowX, arrowY - 26 * scale);
+                ctx.lineTo(arrowX - 8 * scale, arrowY - 14 * scale);
+                ctx.lineTo(arrowX + 8 * scale, arrowY - 14 * scale);
+                ctx.closePath();
+                ctx.fill();
+
+            } else if (arrowType === 'LEFT') {
+                const arcCenterX = cartX - 60 * scale;
+                const arcCenterY = cartY - 20 * scale;
+
+                ctx.beginPath();
+                ctx.arc(arcCenterX, arcCenterY, 32 * scale, Math.PI * 0.15, Math.PI * 0.65, false);
+                ctx.stroke();
+
+                const tipX = arcCenterX + Math.cos(Math.PI * 0.15) * 32 * scale;
+                const tipY = arcCenterY + Math.sin(Math.PI * 0.15) * 32 * scale;
+                
+                ctx.beginPath();
+                ctx.moveTo(tipX, tipY);
+                ctx.lineTo(tipX + 10, tipY - 8);
+                ctx.lineTo(tipX + 12, tipY + 6);
+                ctx.closePath();
+                ctx.fill();
+
+            } else if (arrowType === 'RIGHT') {
+                const arcCenterX = cartX + 60 * scale;
+                const arcCenterY = cartY - 20 * scale;
+
+                ctx.beginPath();
+                ctx.arc(arcCenterX, arcCenterY, 32 * scale, Math.PI * 0.35, Math.PI * 0.85, false);
+                ctx.stroke();
+
+                const tipX = arcCenterX + Math.cos(Math.PI * 0.85) * 32 * scale;
+                const tipY = arcCenterY + Math.sin(Math.PI * 0.85) * 32 * scale;
+
+                ctx.beginPath();
+                ctx.moveTo(tipX, tipY);
+                ctx.lineTo(tipX - 10, tipY - 8);
+                ctx.lineTo(tipX - 12, tipY + 6);
+                ctx.closePath();
+                ctx.fill();
+            }
+            ctx.restore();
+        }
+
+        function render() {
+            if (canvas.width !== state.width || canvas.height !== state.height) {
+                resizeCanvas();
+            }
+
+            ctx.clearRect(0, 0, state.width, state.height);
+
+            drawBackground();
+            drawRoad();
+            updateAndDrawWorldObjects();
+            drawDonkeyAndCart();
+            updateAndDrawParticles();
+
+            if (state.gameState === 'PLAYING') {
+                state.cameraZ += state.speed;
+                state.distance += state.speed;
+                state.score = Math.floor(state.distance / 25);
+                scoreDisplay.innerText = `Score: ${state.score}`;
+            }
+
+            requestAnimationFrame(render);
+        }
+
+        btnYes.addEventListener('click', function() {
+            if (quizQuestion) quizQuestion.classList.add('hidden');
+            quizButtons.classList.add('hidden');
+            quizResponse.classList.remove('hidden');
+            quizResponse.classList.add('flex');
+            quizMsg.innerText = "Ciyaar bal maandhow waaya araga tehe,";
+            quizMsg.className = "text-xl font-bold mb-6 text-emerald-400 leading-relaxed";
+            btnStartGame.classList.remove('hidden');
+            btnStartGame.disabled = false;
+        });
+
+        btnNo.addEventListener('click', function(e) {
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            if (document.activeElement) document.activeElement.blur();
+            
+            state.gameState = 'LOCKED';
+            if (btnStartGame) {
+                btnStartGame.disabled = true;
+                btnStartGame.classList.add('hidden');
+            }
+
+            if (quizQuestion) quizQuestion.classList.add('hidden');
+            quizButtons.classList.add('hidden');
+            quizResponse.classList.remove('hidden');
+            quizResponse.classList.add('flex');
+            
+            quizMsg.innerHTML = `
+                <div class="flex flex-col items-center justify-center my-2 transform hover:scale-105 transition-transform">
+                    <svg class="w-36 h-36 md:w-44 md:h-44 drop-shadow-2xl animate-bounce" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M 40 48 Q 10 5 28 3 Q 45 12 46 42 Z" fill="#7E838B" stroke="#3A3D42" stroke-width="3"/>
+                        <path d="M 38 42 Q 18 12 28 10 Q 40 18 42 38 Z" fill="#B4A5A5"/>
+                        <path d="M 80 48 Q 110 5 92 3 Q 75 12 74 42 Z" fill="#7E838B" stroke="#3A3D42" stroke-width="3"/>
+                        <path d="M 82 42 Q 102 12 92 10 Q 80 18 78 38 Z" fill="#B4A5A5"/>
+                        <path d="M 50 20 Q 60 8 70 20 Q 60 28 50 20 Z" fill="#22252A"/>
+                        <ellipse cx="60" cy="58" rx="30" ry="34" fill="#7E838B" stroke="#3A3D42" stroke-width="3"/>
+                        <ellipse cx="60" cy="78" rx="24" ry="18" fill="#E5E7EB" stroke="#9CA3AF" stroke-width="2"/>
+                        <ellipse cx="50" cy="78" rx="4" ry="6" fill="#1F2937"/>
+                        <ellipse cx="70" cy="78" rx="4" ry="6" fill="#1F2937"/>
+                        <circle cx="45" cy="48" r="10" fill="#FFFFFF" stroke="#1F2937" stroke-width="2"/>
+                        <circle cx="75" cy="48" r="10" fill="#FFFFFF" stroke="#1F2937" stroke-width="2"/>
+                        <circle cx="47" cy="48" r="5" fill="#111827"/>
+                        <circle cx="73" cy="48" r="5" fill="#111827"/>
+                        <path d="M 33 36 L 55 42" stroke="#1F2937" stroke-width="4" stroke-linecap="round"/>
+                        <path d="M 87 36 L 65 42" stroke="#1F2937" stroke-width="4" stroke-linecap="round"/>
+                        <path d="M 46 88 Q 60 96 74 88" stroke="#1F2937" stroke-width="3" fill="none"/>
+                        <rect x="52" y="87" width="7" height="8" rx="1" fill="#FFFFFF" stroke="#1F2937" stroke-width="1.5"/>
+                        <rect x="61" y="87" width="7" height="8" rx="1" fill="#FFFFFF" stroke="#1F2937" stroke-width="1.5"/>
+                    </svg>
+                </div>
+                <span class="text-xl md:text-2xl font-black text-rose-400 leading-snug drop-shadow-md">
+                    maandhow dameerka haaga jajabine iska bax
+                </span>
+            `;
+            quizMsg.className = "text-center flex flex-col items-center w-full";
+
+            setTimeout(function() {
+                try { window.close(); } catch(err) {}
+                try { self.close(); } catch(err) {}
+                try { window.top.close(); } catch(err) {}
+
+                document.body.innerHTML = `
+                    <div style="position:fixed; inset:0; background-color:#000000; color:#ffffff; display:flex; flex-direction:column; justify-content:center; align-items:center; padding:24px; text-align:center; z-index:99999;">
+                        <div style="font-size:80px; margin-bottom:16px;">🫏💥</div>
+                        <h1 style="font-size:28px; font-weight:900; color:#f43f5e; margin-bottom:12px; font-family:'Fredoka','Rubik',sans-serif; text-transform:uppercase; letter-spacing:1px;">
+                            CIYAARTA WAA LA XIRAY
+                        </h1>
+                        <p style="font-size:20px; font-weight:800; color:#fde68a; max-width:320px; line-height:1.4;">
+                            maandhow dameerka haaga jajabine iska bax
+                        </p>
+                    </div>
+                `;
+            }, 1800);
+        });
+
+        function resetToQuiz() {
+            state.gameState = 'QUIZ';
+            crashOverlay.classList.add('opacity-0', 'pointer-events-none');
+            quizOverlay.classList.remove('hidden');
+
+            if (quizQuestion) quizQuestion.classList.remove('hidden');
+            if (quizButtons) quizButtons.classList.remove('hidden');
+            if (quizResponse) {
+                quizResponse.classList.add('hidden');
+                quizResponse.classList.remove('flex');
+            }
+            if (btnStartGame) btnStartGame.classList.add('hidden');
+        }
+
+        btnStartGame.addEventListener('click', () => {
+            quizOverlay.classList.add('hidden');
+            state.gameState = 'PLAYING';
+            initWorldObjects();
+        });
+
+        btnRestart.addEventListener('click', () => {
+            state.gameState = 'PLAYING';
+            initWorldObjects();
+        });
+
+        btnRestartQuiz.addEventListener('click', resetToQuiz);
+
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+        const containerEl = document.getElementById('gameContainer');
+        containerEl.addEventListener('touchstart', (e) => {
+            if (e.touches.length > 0) {
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+            }
+        }, { passive: true });
+
+        containerEl.addEventListener('touchend', (e) => {
+            if (state.gameState !== 'PLAYING') return;
+            if (!e.changedTouches.length) return;
+
+            const deltaX = e.changedTouches[0].clientX - touchStartX;
+            const deltaY = e.changedTouches[0].clientY - touchStartY;
+
+            // Horizontal Swipe
+            if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 25) {
+                if (deltaX > 0 && state.lane < 1) {
+                    state.lane++;
+                    state.targetXRatio = 0.5 + state.lane * 0.22;
+                } else if (deltaX < 0 && state.lane > -1) {
+                    state.lane--;
+                    state.targetXRatio = 0.5 + state.lane * 0.22;
+                }
+            } 
+            // Swipe Up or Tap to Jump
+            else if (deltaY < -25 || Math.abs(deltaX) <= 25) {
+                if (!state.isJumping) {
+                    state.isJumping = true;
+                    state.jumpProgress = 0;
+                }
+            }
+        }, { passive: true });
+
+        document.getElementById('btnLeft').addEventListener('click', () => {
+            if (state.gameState !== 'PLAYING') return;
+            if (state.lane > -1) {
+                state.lane--;
+                state.targetXRatio = 0.5 + state.lane * 0.22;
+            }
+        });
+
+        document.getElementById('btnRight').addEventListener('click', () => {
+            if (state.gameState !== 'PLAYING') return;
+            if (state.lane < 1) {
+                state.lane++;
+                state.targetXRatio = 0.5 + state.lane * 0.22;
+            }
+        });
+
+        document.getElementById('btnJump').addEventListener('click', () => {
+            if (state.gameState !== 'PLAYING') return;
+            if (!state.isJumping) {
+                state.isJumping = true;
+                state.jumpProgress = 0;
+            }
+        });
+
+        window.addEventListener('keydown', (e) => {
+            if (state.gameState !== 'PLAYING') return;
+            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+                if (state.lane > -1) {
+                    state.lane--;
+                    state.targetXRatio = 0.5 + state.lane * 0.22;
+                }
+            } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+                if (state.lane < 1) {
+                    state.lane++;
+                    state.targetXRatio = 0.5 + state.lane * 0.22;
+                }
+            } else if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W' || e.key === ' ') {
+                if (!state.isJumping) {
+                    state.isJumping = true;
+                    state.jumpProgress = 0;
+                }
+            }
+        });
+
+        toggleControlsBtn.addEventListener('click', () => visualPanel.classList.remove('translate-y-full'));
+        closePanelBtn.addEventListener('click', () => visualPanel.classList.add('translate-y-full'));
+
+        chkControls.addEventListener('change', (e) => {
+            controlsContainer.style.opacity = e.target.checked ? '1' : '0';
+            controlsContainer.style.pointerEvents = e.target.checked ? 'auto' : 'none';
+        });
+
+        chkBouncing.addEventListener('change', (e) => state.isBouncing = e.target.checked);
+        chkArrows.addEventListener('change', (e) => state.showArrows = e.target.checked);
+        chkDetails.addEventListener('change', (e) => state.showDetails = e.target.checked);
+
+        window.addEventListener('DOMContentLoaded', () => {
+            resizeCanvas();
+            initWorldObjects();
+            requestAnimationFrame(render);
+        });
+
+        window.onload = function() {
+            resizeCanvas();
+        };
+    </script>
+</body>
+</html>
